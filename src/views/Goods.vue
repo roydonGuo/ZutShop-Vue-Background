@@ -1,5 +1,4 @@
 <template>
-
   <div>
     <!-- 搜索 -->
     <div style="margin: 0 0 10px;display: inline-block;float: left;">
@@ -18,12 +17,13 @@
       </el-popconfirm>
     </div>
     <!-- 商品表单 -->
-    <el-table class="goods-table" :data="tableData" border stripe @selection-change="handleSelectionChange">
+    <el-table class="goods-table" :data="tableData" border stripe @selection-change="handleSelectionChange"
+      :default-sort="{ prop: 'priority', order: 'descending' }">
       <el-table-column type="selection" width="30" align="center"></el-table-column>
       <el-table-column prop="gid" label="GID" width="100" align="center"></el-table-column>
       <el-table-column label="" width="120" align="center">
         <template slot-scope="scope">
-          <img style="width: 100%; height: 100px;border-radius: 10px;" :src="scope.row.image" alt="图片加载失败" />
+          <img style="width: 100%; height: 100px;border-radius: 10px;" v-lazy=scope.row.image alt="图片加载失败" />
         </template>
       </el-table-column>
       <el-table-column prop="itemType" label="类型" width="120"></el-table-column>
@@ -31,7 +31,7 @@
       <el-table-column prop="sellPoint" label="卖点"></el-table-column>
       <el-table-column prop="price" label="价格" width="100"></el-table-column>
       <el-table-column prop="num" label="库存" width="100"></el-table-column>
-      <el-table-column prop="priority" label="优先级" width="100"></el-table-column>
+      <el-table-column prop="priority" label="优先级" width="100" sortable></el-table-column>
       <el-table-column label="操作" width="200" align="center">
         <template slot-scope="scope">
           <el-button type="success" @click="handleEdit(scope.row)">编辑 <i class="el-icon-edit"></i></el-button>
@@ -43,6 +43,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页区域 -->
     <div style="padding: 10px 0">
       <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pageNum"
         :page-sizes="[5, 10, 20, 30]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
@@ -55,11 +56,13 @@
         <el-form-item label="商品图片">
           <el-tooltip placement="top">
             <div slot="content">点击上传图片</div>
-            <el-upload style="text-align: center; margin-bottom: 10px" class="avatar-uploader"
+            <el-upload class="image-upload"
+              style="text-align: center; padding: 10px;weight:120px;height:240px;border:1px solid black;border-radius: 10px;"
               action="http://localhost:7777/file/upload" :show-file-list="false" :on-success="handleAvatarSuccess">
               <img v-if="form.image" :src="form.image" class="avatar"
-                style="border-radius: 10px;weight:120px;height:120px" />
-              <i v-else class="el-icon-plus avatar-uploader-icon"></i> </el-upload>
+                style="border-radius: 10px;weight:260px;height:220px" />
+              <i v-else style="font-size:50px;line-height: 200px;" :class="uploadTip" @click="willUpload"></i>
+            </el-upload>
           </el-tooltip>
         </el-form-item>
         <el-row>
@@ -99,7 +102,7 @@
 
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialog = false">取 消</el-button>
+        <el-button @click="cancel">取 消</el-button>
         <el-button type="primary" @click="addOrUpdateGoods">确 定</el-button>
       </div>
     </el-dialog>
@@ -117,12 +120,10 @@ export default {
       pageSize: 10,
       total: 0,
       title: "",
-
       form: {},
-
       dialog: false,
       multipleSelection: [],
-
+      uploadTip: "el-icon-plus avatar-uploader-icon"
     };
   },
   created() {
@@ -155,6 +156,9 @@ export default {
       this.pageNum = pageNum
       this.loadGoods()
     },
+    willUpload() {
+      this.uploadTip = "el-icon-loading"
+    },
     handleAvatarSuccess(res) {
       // console.log(res);
       if (res.code === 200) {
@@ -174,6 +178,7 @@ export default {
         if (res.data) {
           this.$message.success("保存成功")
           this.dialog = false
+          this.uploadTip = "el-icon-plus avatar-uploader-icon"
           this.loadGoods()
         } else {
           this.$message.error("保存失败")
@@ -183,6 +188,10 @@ export default {
     handleEdit(row) {
       this.form = { ...row }
       this.dialog = true
+    },
+    cancel() {
+      this.dialog = false
+      this.uploadTip = "el-icon-plus avatar-uploader-icon"
     },
     delRow(id) {
       this.request.delete('/goods/del/' + id).then(res => {
@@ -211,11 +220,8 @@ export default {
           this.$message.error("批量删除失败")
         }
       })
-
     },
-
   }
-
 };
 </script>
 <style scoped>
